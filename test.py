@@ -26,25 +26,21 @@ def split_part_recurrent_data(data_list, window):
     return data_vec
 
 # 異常発生時の赤字表示用
-# def color_red_if_over_threshold(val):
+def color_red_if_over_threshold(val):
     #Thresholdを超える場合、文字を赤色で太字にする
-    #color = 'red' if val > threshold else 'black'
-    #weight = 'bold' if val > threshold else 'normal'
-    #return f'color: {color}; font-weight: {weight}'
+    color = 'red' if val > threshold else 'black'
+    weight = 'bold' if val > threshold else 'normal'
+    return f'color: {color}; font-weight: {weight}'
 
 
 # メインプログラム
 def main():
     st.title('Autoencoder Comparison App')
 
-    # スライダーによる値の動的変更
-    # threshold = st.sidebar.slider('threshold setting', 0, 0.01, 0.001)
-    # 'コンディション：' , threshold
-
     # モデルファイルのアップロード
     model_file = st.file_uploader("Upload your Autoencoder model", type=["h5"])
     if model_file is not None:
-        tfile = tempfile.NamedTemporaryFile(delete=True) 
+        tfile = tempfile.NamedTemporaryFile(delete=true) 
         tfile.write(model_file.read())
 
         with st.spinner('Loading model...'):
@@ -174,7 +170,7 @@ def main():
         # st.markdown(html, unsafe_allow_html=True)
 
         # データフレームをHTML形式に変換
-        html = df_errors.to_html(float_format="{:0.8f}".format)
+        html = df_errors.to_html(float_format="{:0.3f}".format)
 
         # HTMLにスタイルを適用
         html = html.replace('<table>', '<table style="width:150%; font-size:20px; margin-left: auto; margin-right: auto;">')
