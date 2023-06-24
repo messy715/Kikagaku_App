@@ -26,7 +26,7 @@ def split_part_recurrent_data(data_list, window):
     return data_vec
 
 # 異常発生時の赤字表示用
-def color_red_if_over_threshold(val):
+def color_red_if_over_threshold(val, threshold):
     #Thresholdを超える場合、文字を赤色で太字にする
     color = 'red' if val > threshold else 'black'
     weight = 'bold' if val > threshold else 'normal'
@@ -37,10 +37,32 @@ def color_red_if_over_threshold(val):
 def main():
     st.title('Autoencoder Comparison App')
 
+    # サイドバーにmse_thresholdのスライダーを追加
+    mse_threshold = st.sidebar.slider(
+        "MSE Threshold",
+        min_value=0.000,
+        max_value=1.000,
+        value=0.001,  # 初期値
+        step=0.001    # 加減値
+    )
+
+    # サイドバーにjudge_thresholdの数値入力ボックスを追加
+    judge_threshold = st.sidebar.number_input(
+        "Judge Threshold",
+        min_value=0,    # 下限値
+        max_value=1000, # 上限値
+        value=20,       # 初期値
+        step=1          # 加減値
+    )
+
+    # 値を表示（デバッグ用）
+    st.write(f"MSE Threshold: {mse_threshold}")
+    st.write(f"Judge Threshold: {judge_threshold}")
+
     # モデルファイルのアップロード
     model_file = st.file_uploader("Upload your Autoencoder model", type=["h5"])
     if model_file is not None:
-        tfile = tempfile.NamedTemporaryFile(delete=true) 
+        tfile = tempfile.NamedTemporaryFile(delete=False) 
         tfile.write(model_file.read())
 
         with st.spinner('Loading model...'):
@@ -121,8 +143,7 @@ def main():
         squared_error = np.square(test_data - pred_data)
 
         # オプション２：二乗誤差が0.001未満の場合はゼロとみなします。
-        # threshold = 0.001
-        # squared_error = np.where(squared_error < threshold, 0, squared_error)
+        squared_error = np.where(squared_error < mse_threshold, 0, squared_error)
 
         # カラムの作成
         col5, col6 = st.columns(2)
