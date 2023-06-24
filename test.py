@@ -71,7 +71,7 @@ def main():
 
         # カラムの作成
         col1, col2 = st.columns(2)
-        #col1, col2, col3, col4 = st.columns(4)
+        # col1, col2, col3, col4 = st.columns(4)
         # scaled_dataのグラフを描画
         with col1:
             #st.header('Scaled Data')
