@@ -4,4 +4,4 @@ pandas
 scikit-learn
 tempfile
 matplotlib.pyplot
-tensorflow
+tensorflow.keras.models
