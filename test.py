@@ -44,7 +44,6 @@ def main():
         max_value=1.000, # 上限値
         value=0.001,  # 初期値
         step=0.001    # 加減値
-        format="%.3f"  # 小数点以下3桁まで表示
     )
 
     # サイドバーにjudge_thresholdのスライダーを追加
