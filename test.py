@@ -37,26 +37,28 @@ def color_red_if_over_threshold(val, threshold):
 def main():
     st.title('Autoencoder Comparison App')
 
-    # サイドバーにmse_thresholdのスライダーを追加
-    mse_threshold = st.sidebar.slider(
-        "MSE Threshold",
-        min_value=0.000, # 下限値
-        max_value=1.000, # 上限値
-        value=0.001,  # 初期値
-        step=0.001    # 加減値
+    # サイドバーにmse_thresholdの数値入力ボックスを追加（千分の一の位置まで）
+    mse_threshold = st.sidebar.number_input(
+        "MSE Threshold x 1000",
+        min_value=0,  # 下限値
+        max_value=1000,  # 上限値
+        value=1,  # 初期値
+        step=1,  # 加減値
     )
 
-    # サイドバーにjudge_thresholdのスライダーを追加
-    judge_threshold = st.sidebar.slider(
+    mse_threshold /= 1000  # 実際の値に戻す
+
+    # サイドバーにjudge_thresholdの数値入力ボックスを追加
+    judge_threshold = st.sidebar.number_input(
         "Judge Threshold",
-        min_value=0,    # 下限値
-        max_value=1000, # 上限値
-        value=20,       # 初期値
-        step=1          # 加減値
+        min_value=0,  # 下限値
+        max_value=1000,  # 上限値
+        value=20,  # 初期値
+        step=1  # 加減値
     )
 
     # 値を表示（デバッグ用）
-    st.write(f"MSE Threshold: {mse_threshold}")
+    st.write(f"MSE Threshold: {mse_threshold:.3f}")
     st.write(f"Judge Threshold: {judge_threshold}")
 
     # モデルファイルのアップロード
