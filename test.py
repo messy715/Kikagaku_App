@@ -38,7 +38,7 @@ def main():
     st.title('Autoencoder Comparison App')
 
     # サイドバーにmse_thresholdのスライダーを追加
-    mse_threshold = st.sidebar.number_input(
+    mse_threshold = st.sidebar.slider(
         "MSE Threshold",
         min_value=0.000, # 下限値
         max_value=1.000, # 上限値
@@ -47,8 +47,8 @@ def main():
         format="%.3f"  # 小数点以下3桁まで表示
     )
 
-    # サイドバーにjudge_thresholdの数値入力ボックスを追加
-    judge_threshold = st.sidebar.number_input(
+    # サイドバーにjudge_thresholdのスライダーを追加
+    judge_threshold = st.sidebar.slider(
         "Judge Threshold",
         min_value=0,    # 下限値
         max_value=1000, # 上限値
