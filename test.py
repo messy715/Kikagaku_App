@@ -38,10 +38,10 @@ def main():
     st.title('Autoencoder Comparison App')
 
     # サイドバーにmse_thresholdのスライダーを追加
-    mse_threshold = st.sidebar.slider(
+    mse_threshold = st.sidebar.number_input(
         "MSE Threshold",
-        min_value=0.000,
-        max_value=1.000,
+        min_value=0.000, # 下限値
+        max_value=1.000, # 上限値
         value=0.001,  # 初期値
         step=0.001    # 加減値
     )
