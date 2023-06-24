@@ -4,4 +4,4 @@ pandas
 scikit-learn
 tempfile
 matplotlib.pyplot
-tensorflow.keras.models
+tensorflow==2.11.0
