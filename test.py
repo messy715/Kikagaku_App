@@ -1,3 +1,4 @@
+# 各種インポート
 import streamlit as st
 import pandas as pd
 from tensorflow.keras.models import load_model
@@ -5,9 +6,7 @@ import tempfile
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import matplotlib.pyplot as plt
-
-window = 7636 # 部分窓
-threshold = 15 # 異常データとみなす閾値
+import os
 
 # 正規化
 def act_minxmax_scaler(data):
@@ -25,13 +24,8 @@ def split_part_recurrent_data(data_list, window):
 
     return data_vec
 
-# 異常発生時の赤字表示用
-def color_red_if_over_threshold(val, threshold):
-    #Thresholdを超える場合、文字を赤色で太字にする
-    color = 'red' if val > threshold else 'black'
-    weight = 'bold' if val > threshold else 'normal'
-    return f'color: {color}; font-weight: {weight}'
-
+# 部分窓の定義
+window = 7636 
 
 # メインプログラム
 def main():
@@ -42,42 +36,55 @@ def main():
         "MSE Threshold x 1000",
         min_value=0,  # 下限値
         max_value=1000,  # 上限値
-        value=1,  # 初期値
+        value=0,  # 初期値
         step=1,  # 加減値
     )
 
     mse_threshold /= 1000  # 実際の値に戻す
 
-    # サイドバーにjudge_thresholdの数値入力ボックスを追加
-    judge_threshold = st.sidebar.number_input(
-        "Judge Threshold",
+    # サイドバーにthresholdの数値入力ボックスを追加
+    warning_threshold = st.sidebar.number_input(
+        "Warning Threshold",
         min_value=0,  # 下限値
         max_value=1000,  # 上限値
-        value=20,  # 初期値
+        value=10,  # 初期値
+        step=1  # 加減値
+    )
+
+    # サイドバーにattention_thresholdの数値入力ボックスを追加
+    # ここで、上で定義したthresholdをattention_thresholdのmax_valueとして用いる
+    attention_threshold = st.sidebar.number_input(
+        "Attention Threshold",
+        min_value=0,  # 下限値
+        max_value=warning_threshold,  # 上限値をthresholdに設定
+        value=min(5, warning_threshold),  # 初期値がthresholdを超えないように設定
         step=1  # 加減値
     )
 
     # 値を表示（デバッグ用）
     st.write(f"MSE Threshold: {mse_threshold:.3f}")
-    st.write(f"Judge Threshold: {judge_threshold}")
+    st.write(f"Warning Threshold: {warning_threshold}")
+    st.write(f"Attention Threshold: {attention_threshold}")
+    
 
-    # モデルファイルのアップロード
+    # モデルファイルとサンプルデータのアップロード待機
     model_file = st.file_uploader("Upload your Autoencoder model", type=["h5"])
-    if model_file is not None:
-        tfile = tempfile.NamedTemporaryFile(delete=False) 
-        tfile.write(model_file.read())
+    data_file = st.file_uploader("Upload your sample data", type=["csv"])
+    if model_file is not None and data_file is not None:
+
+        tfile_model = tempfile.NamedTemporaryFile(delete=False) 
+        tfile_model.write(model_file.read())
+        tfile_model.close()
 
         with st.spinner('Loading model...'):
-            model = load_model(tfile.name)
+            model = load_model(tfile_model.name)
         st.success('Model loaded successfully!')
+        
+        os.remove(tfile_model.name)  # モデルファイルの削除
 
-    # サンプルデータのアップロード
-    data_file = st.file_uploader("Upload your sample data", type=["csv"])
-    if data_file is not None:
         with st.spinner('Loading data...'):
             data = pd.read_csv(data_file)
         st.success('Data loaded successfully!')
-        # st.write(data.head())
 
         # 正規化
         data = data['Torque']
@@ -132,19 +139,10 @@ def main():
             st.pyplot(fig)
 
         
-        # オプション１：両配列の長さを比較し、短い配列を長い配列の長さに合わせて拡張します。
-        #if len(test_data) != len(pred_data):
-        #    if len(test_data) < len(pred_data):
-        #        diff = len(pred_data) - len(test_data)
-        #        arr1 = np.pad(test_data, (0, diff), 'edge')
-        #    else:
-        #        diff = len(test_data) - len(pred_data)
-        #        pred_data = np.pad(pred_data, (0, diff), 'edge')
-
         # 各データの要素同士の二乗差分算出
         squared_error = np.square(test_data - pred_data)
 
-        # オプション２：二乗誤差が0.001未満の場合はゼロとみなします。
+        # 二乗誤差が閾値（mse_threshold）未満の場合はゼロとみなします。
         squared_error = np.where(squared_error < mse_threshold, 0, squared_error)
 
         # カラムの作成
@@ -178,28 +176,47 @@ def main():
             'Value': [max_error, min_error, mean_error, median_error, total_squared_error]
         }, index=['Max Error', 'Min Error', 'Mean Error', 'Median Error', 'Total Squared Error'])
         
-        
-        # データフレームの表示
-        #st.write(df_errors)
-
-
-        # Total Squared Errorの列だけにスタイリングを適用
-        # html = df_errors.style.apply(lambda s: [color_red_if_over_threshold(v) for v in s], subset=['Total Squared Error']).set_properties(**{'font-size': '20pt', 'text-align': 'center'}).render()
-
-        # HTMLにスタイルを適用
-        # html = html.replace('<table>', '<table style="width:50%; margin-left: auto; margin-right: auto;">')
-
-        # HTMLを表示
-        # st.markdown(html, unsafe_allow_html=True)
-
         # データフレームをHTML形式に変換
-        html = df_errors.to_html(float_format="{:0.3f}".format)
+        df_errors_html = df_errors.to_html(float_format="{:0.20f}".format)
 
         # HTMLにスタイルを適用
-        html = html.replace('<table>', '<table style="width:150%; font-size:20px; margin-left: auto; margin-right: auto;">')
+        df_errors_html = df_errors_html.replace('<table>', '<table style="width:80%; font-size:40px; margin-left: auto; margin-right: auto;">')
 
         # HTMLを表示
-        st.markdown(html, unsafe_allow_html=True)
+        st.markdown(df_errors_html, unsafe_allow_html=True)
+
+        # 結果に応じた色とメッセージを設定
+        if total_squared_error < attention_threshold:
+            color1 = 'green'
+            message1 = 'NORMAL'
+            color2 = 'black'
+            message2 = "The current torque data from the motor is within the normal range. It's safe to continue operation."
+            result_html = f'''
+            <div style="font-size:150px; color:{color1}; text-align:center;">{message1}</div>
+            <div style="font-size:30px; color:{color2}; text-align:center;">{message2}</div>
+            '''
+        elif total_squared_error < warning_threshold:
+            color1 = 'orange'
+            message1 = 'ATTENTION'
+            color2 = 'black'
+            message2 = "The torque data from the motor exceeds the normal range. We recommend a detailed inspection."
+            result_html = f'''
+            <div style="font-size:150px; color:{color1}; text-align:center;">{message1}</div>
+            <div style="font-size:30px; color:{color2}; text-align:center;">{message2}</div>
+            '''
+        else:
+            color1 = 'red'
+            message1 = 'WARNING'
+            color2 = 'black'
+            message2 = "An anomaly has been detected in the motor's torque data. Immediate action is required."
+            result_html = f'''
+            <div style="font-size:150px; color:{color1}; text-align:center;">{message1}</div>
+            <div style="font-size:30px; color:{color2}; text-align:center;">{message2}</div>
+            '''
+
+        st.markdown(result_html, unsafe_allow_html=True)
+
+
        
         
 
